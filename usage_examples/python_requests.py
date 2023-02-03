@@ -43,21 +43,6 @@ class Solver:
         if self.userDataPath == None: self.userDataPath = os.path.join(os.getcwd(), "browserUserData\\")
         if not os.path.exists(self.userDataPath):
             os.mkdir(self.userDataPath)
-    async def _getHsw1(self, m, c):
-        try:
-            browser = await pyppeteer.launch({"headless": self.headless, 'executablePath': chrome, "userDataDir": self.userDataPath, "args": []})
-        except:
-            print("Chrome executablePath not correct. please set the correct chrome/chromium path")
-            # return "Chrome executablePath not correct. please set the correct chrome/chromium path"
-
-        page = await browser.newPage()
-        await page.addScriptTag({"content": "Object.defineProperty(navigator, \"webdriver\", {\"get\": () => false}})"})
-        await page.addScriptTag({"content": m})
-        response = await page.evaluate(f"hsw(\"{c}\")")
-        print(response)
-        await page.close()
-        await browser.close()
-        return str(response)
 
     async def _getHsw(self, m, c):
         try:
@@ -75,7 +60,7 @@ class Solver:
             await browser.close()
             return str(response)
         except Exception as e:
-            print(f"error in getting hsw1: {e}")
+            print(f"error in getting hsw => {e}")
             return "Chrome executablePath not correct. please set the correct chrome/chromium path"
 
     async def _getCaptcha(self):
