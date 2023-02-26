@@ -1,22 +1,20 @@
 ####
 # pip install undetected_chromedriver selenium pillow requests flask waitress
-# Fill your own UID and API KEY bellow before using.
+# Fill your own API KEY bellow before using.
 # Make sure you already have selenium, chrome and undetected_chromedriver installed.
 # If you have any issue please create a github issue or you can ask help on Discord https://discord.gg/E7FfzhZqzA
 # 
 ####
-# uid="62c6bf7eb1e76d24e366" #Replace with your own UID
 # apikey="62d0243f-7107-67ee-f312-09d8f5af84f3" #Replace with your own apikey
 
 
-uid="" # Change this to correct value
 apikey="" #  Change this to correct value
 site="demo" # Change demo to corrct value else Free account will be blocked.
 sitekey="demo" # Change demo to corrct value else Free account will be blocked.
 
 use_subprocess_error = False # Make it True if you got "got an unexpected keyword argument 'use_subprocess'"
 
-api_url = 'https://free.nocaptchaai.com/api/solve'
+api_url = 'https://free.nocaptchaai.com/solve'
 
 from genericpath import exists
 import time, platform
@@ -39,9 +37,10 @@ from selenium.common.exceptions import (
 options = webdriver.ChromeOptions()
 # options.binary_location = "C:\\Users\\ROG\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe"
 # options.binary_location = "C:\\Users\\ROG\\Documents\\Chromium-Portable-win64-codecs-sync-oracle\\bin\\chrome.exe"
-# options.add_argument("start-maximized")
+# options.add_argument("--window-size=640,480")
+options.add_argument("--start-maximized")
 # options.add_argument('--headless')
-options.add_argument('--no-sandbox')
+# options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 if platform.system().startswith('Windows'):
     if use_subprocess_error:
@@ -52,8 +51,8 @@ else:
     driver = uc.Chrome(options=options)
 
 def main():
-    if uid == "" or apikey == "" or site == "demo" or sitekey == "demo": # Do not change this!!!
-        print("You need to set => uid => apikey => site and => sitekey first.")
+    if apikey == "" or site == "demo" or sitekey == "demo": # Do not change this!!!
+        print("You need to set => apikey => site and => sitekey first.")
         return False
     driver.get('https://shimuldn.github.io/hcaptcha/2')
     time.sleep(1)
@@ -125,7 +124,7 @@ def main():
         # Sending the request to api server
         # print(json.dumps(image_data))   # uncomment this to see the request data
         print("Sending request to api server")
-        r = requests.post(url = full_url, headers={'Content-Type': 'application/json', 'uid': uid,
+        r = requests.post(url = full_url, headers={'Content-Type': 'application/json',
         'apikey': apikey}, data = json.dumps(data_to_send))
 
         if r.json()['status'] == "new":
@@ -205,4 +204,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
