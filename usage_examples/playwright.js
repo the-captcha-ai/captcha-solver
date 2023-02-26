@@ -1,5 +1,5 @@
 // npm install axios ghost-cursor playwright
-// put your uid and key
+// put your and key
 // run node playwright.js in terminal
 
 
@@ -7,8 +7,7 @@ const { default: axios } = require("axios");
 const { path } = require("ghost-cursor");
 const playwright = require("playwright");
 const solver = {
-    "uid": "<UID>",
-    "key": "<KEY>"
+    "key": "your nocaptchaai.com apikey"
 };
 
 (async () => {
@@ -42,29 +41,26 @@ const solver = {
         }
     }); 
     const site_key = await page.evaluate(() => {
-        return document.querySelector("[title='widget containing checkbox for hCaptcha security challenge']").getAttribute("src").split("&sitekey=")[1].split("&")[0];
+        return document.querySelector("[title='Widget containing checkbox for hCaptcha security challenge']").getAttribute("src").split("&sitekey=")[1].split("&")[0];
     });
-    /*
         // click element like human
-        const boxFrame = await page.waitForSelector("[title='widget containing checkbox for hCaptcha security challenge']").then(frame => frame.contentFrame()), boxBB = await boxFrame.waitForSelector("#anchor-wr").then(e => e.boundingBox());
-        for (const pos of path({ "x": 0, "y": 0 }, { "x": boxBB.x + getRandomInt(0, boxBB.width), "y": boxBB.y + getRandomInt(0, boxBB.height) })) {
-            await page.mouse.move(pos.x, pos.y);
-            await sleep(Math.random() * 25);
-        }
-        await page.mouse.down();
-        await sleep(Math.random() * 100);
-        await page.mouse.up();
-        await sleep(500);
-    */
-    await page.click("[title='widget containing checkbox for hCaptcha security challenge']");
+        // const boxFrame = await page.waitForSelector("[title='Widget containing checkbox for hCaptcha security challenge']").then(frame => frame.contentFrame()), boxBB = await boxFrame.waitForSelector("#anchor-wr").then(e => e.boundingBox());
+        // for (const pos of path({ "x": 0, "y": 0 }, { "x": boxBB.x + getRandomInt(0, boxBB.width), "y": boxBB.y + getRandomInt(0, boxBB.height) })) {
+        //     await page.mouse.move(pos.x, pos.y);
+        //     await sleep(Math.random() * 25);
+        // }
+        // await page.mouse.down();
+        // await sleep(Math.random() * 100);
+        // await page.mouse.up();
+        // await sleep(500);
+    await page.click("[title='Widget containing checkbox for hCaptcha security challenge']");
     async function solve(images, target) {
         const captchaFrame = await page.waitForSelector("[title='Main content of the hCaptcha challenge']").then(frame => frame.contentFrame());
         let res = await axios({
             method: "post",
-            url: "https://free.nocaptchaai.com/api/solve",
+            url: "https://free.nocaptchaai.com/solve",
             headers: {
                 "Content-type": "application/json",
-                "uid": solver.uid,
                 "apikey": solver.key
             },
             data: {
