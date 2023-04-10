@@ -111,7 +111,9 @@ class Solver:
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-site"
-        }, data=p).json()
+        }, data=p,
+        ).json()
+        # print(c['request_type'])
         return c
 
     async def solveCaptcha(self):
@@ -130,6 +132,13 @@ class Solver:
         }
 
         c = await self._getCaptcha(); k, t = c["key"], c["tasklist"]; i, t_, z = {}, {}, 0
+        request_type = c["request_type"]
+        if request_type == "image_label_binary":
+            captcha_type = "grid"
+        elif request_type == "image_label_area_select":
+            captcha_type = "bbox"
+            print("bbox captcha detected")
+
         for u in t:
             img_base64 = base64.b64encode(requests.get(str(u["datapoint_uri"]), headers = headers).content)
             img_base64_decoded = img_base64.decode('utf-8') 
@@ -137,13 +146,20 @@ class Solver:
             i[z], t_[url] = url, task_key
             z += 1
         g = c["requester_question"]["en"]; print(f"Target is ==> {g}")
-        task_result = requests.post(self.nocaptchaai["solver"], json={
+        task_data = {
             "images": i,
             "target": g,
             "method": "hcaptcha_base64",
             "site": self.href,
             "sitekey": self.sitekey
-        }, headers={
+        }
+        if captcha_type == "bbox":
+            task_data['choices'] = []
+            task_data['type'] = 'bbox'
+        # print(task_data)
+        with open("task_data.json", "w") as f:
+            json.dump(task_data, f)
+        task_result = requests.post(self.nocaptchaai["solver"], json=task_data, headers={
             "Content-type": "application/json",
             "apikey": self.nocaptchaai["apikey"]
         }).json(); print(task_result)
@@ -157,16 +173,33 @@ class Solver:
                 elif not "queue" in p2: return False
                 if z >= 5: print(p2); return False
                 z += 1
-                await asyncio.sleep(5.0)
+                # await asyncio.sleep(1.0)
+            # print(p2)
             for d in i:
-                if str(d) in p2["solution"]: answer[t_[i[d]]] = "true"
-                else: answer[t_[i[d]]] = "false"
+                if captcha_type == "grid":
+                    if str(d) in p2["solution"]: answer[t_[i[d]]] = "true"
+                    else: answer[t_[i[d]]] = "false"
+                elif captcha_type == "bbox":
+                    if len(i) != len(p2["answers"]):
+                        return False
+                    for d in i:
+                        item = [{"entity_name": 0,"entity_type": "label","entity_coords": p2["answers"][d]}]
+                        answer[t_[i[d]]] = item
         elif task_result['status'] == 'solved':
+            print("Got instant solution from api")
             answer = {}
             status = 'solved'
-            for d in i:
-                if d in task_result["solution"]: answer[t_[i[d]]] = "true"
-                else: answer[t_[i[d]]] = "false"
+            if captcha_type == "grid":
+                for d in i:
+                    if d in task_result["solution"]: answer[t_[i[d]]] = "true"
+                    else: answer[t_[i[d]]] = "false"
+            elif captcha_type == "bbox":
+                # print(len(i), len(task_result["answers"]))
+                if len(i) != len(task_result["answers"]):
+                    return False
+                for d in i:
+                    item = [{"entity_name": 0,"entity_type": "label","entity_coords": task_result["answers"][d]}]
+                    answer[t_[i[d]]] = item
         # print(answer)
         if (t0 + solveTime) > time.time():
             time.sleep(t0 + solveTime - time.time())
@@ -204,8 +237,8 @@ class Solver:
         else:return "Something wrong"
 async def main():
     apikey = ""
-    site = ""
-    sitekey = ""
+    site = "https://accounts.hcaptcha.com/demo"
+    sitekey = "a5f74b19-9e45-40e0-b45d-47ff91b7a6c2"
     if apikey == "" or site == "" or sitekey == "":
         print("You need to set apikey site and sitekey first.")
         return False
