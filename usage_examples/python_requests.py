@@ -112,6 +112,7 @@ class Solver:
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-site"
         }, data=p,
+        # proxies={"https": "https://127.0.0.1:8080"}, verify=False
         ).json()
         # print(c['request_type'])
         return c
@@ -146,7 +147,7 @@ class Solver:
             print("multi captcha detected")
 
         for u in t:
-            print(u['datapoint_uri'])
+            # print(u['datapoint_uri'])
             img_base64 = base64.b64encode(requests.get(str(u["datapoint_uri"]), headers = headers).content)
             # print(img_base64)
             img_base64_decoded = img_base64.decode('utf-8') 
@@ -167,7 +168,11 @@ class Solver:
         if captcha_type == "multi":
             task_data['choices'] = choices
             task_data['type'] = 'multi'
-        print(task_data['choices'])
+        else:
+            task_data['choices'] = []
+
+        # print(task_data['choices'])
+        # print(json.dumps(task_data))
         with open("task_data.json", "w") as f:
             json.dump(task_data, f)
         task_result = requests.post(self.nocaptchaai["solver"], json=task_data, headers={
@@ -196,8 +201,14 @@ class Solver:
                     for d in i:
                         item = [{"entity_name": 0,"entity_type": "label","entity_coords": p2["answers"][d]}]
                         answer[t_[i[d]]] = item
+                elif captcha_type == "multi":
+                    if len(i) != len(p2["answer"]):
+                        return False
+                    for d in i:
+                        item = [{"entity_name": 0,"entity_type": "label","entity_coords": p2["answer"][d]}]
+                        answer[t_[i[d]]] = item
         elif task_result['status'] == 'solved':
-            print("Got instant solution from api")
+            # print("Got instant solution from api")
             answer = {}
             status = 'solved'
             if captcha_type == "grid":
@@ -210,6 +221,13 @@ class Solver:
                     return False
                 for d in i:
                     item = [{"entity_name": 0,"entity_type": "label","entity_coords": task_result["answers"][d]}]
+                    answer[t_[i[d]]] = item
+            elif captcha_type == "multi":
+                # print(len(i), len(task_result["answers"]))
+                if len(i) != len(task_result["answer"]):
+                    return False
+                for d in i:
+                    item = [{"entity_name": 0,"entity_type": "label","entity_coords": task_result["answer"][d]}]
                     answer[t_[i[d]]] = item
         # print(answer)
         if (t0 + solveTime) > time.time():
@@ -244,6 +262,7 @@ class Solver:
             if "generated_pass_UUID" in checkcaptcha.json():
                 return checkcaptcha.json()["generated_pass_UUID"]
             else:
+                # print("failed to solve captcha")
                 return False
         else:return "Something wrong"
 async def main():
@@ -265,9 +284,13 @@ async def main():
     }
     solver = Solver(config["hcaptcha"]["url"], config["hcaptcha"]["sitekey"], config["solver"]["apikey"], config["headless"])
     result = await solver.solveCaptcha()
-    print(result)
+    # print(result)
+    if result == False:
+        print("Failed to get token")
+    else:
+        print("Got token")
+        print(result)
     # input()
-
 
 if __name__ == '__main__':
     loop = asyncio.new_event_loop()
