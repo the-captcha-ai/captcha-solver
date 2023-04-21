@@ -135,12 +135,20 @@ class Solver:
         request_type = c["request_type"]
         if request_type == "image_label_binary":
             captcha_type = "grid"
+            choices = []
         elif request_type == "image_label_area_select":
             captcha_type = "bbox"
+            choices = []
             print("bbox captcha detected")
+        elif request_type == "image_label_multiple_choice":
+            captcha_type = "multi"
+            choices = [v['en'] for v in c['requester_restricted_answer_set'].values()]
+            print("multi captcha detected")
 
         for u in t:
+            print(u['datapoint_uri'])
             img_base64 = base64.b64encode(requests.get(str(u["datapoint_uri"]), headers = headers).content)
+            # print(img_base64)
             img_base64_decoded = img_base64.decode('utf-8') 
             url, task_key =img_base64_decoded , str(u["task_key"])
             i[z], t_[url] = url, task_key
@@ -156,7 +164,10 @@ class Solver:
         if captcha_type == "bbox":
             task_data['choices'] = []
             task_data['type'] = 'bbox'
-        # print(task_data)
+        if captcha_type == "multi":
+            task_data['choices'] = choices
+            task_data['type'] = 'multi'
+        print(task_data['choices'])
         with open("task_data.json", "w") as f:
             json.dump(task_data, f)
         task_result = requests.post(self.nocaptchaai["solver"], json=task_data, headers={
